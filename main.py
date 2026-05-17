@@ -63,7 +63,7 @@ def build_subject(active_results, now):
     date_str = now.strftime("%-d %b %Y")
     if not active_results:
         return f"Daily Digest — {date_str}"
-    tags = " & ".join(r.subject_tag for r in active_results)
+    tags = " & ".join(r.subject_tag for r in active_results if r.subject_tag)
     return f"Daily Digest: {tags} — {date_str}"
 
 
