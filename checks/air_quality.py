@@ -292,8 +292,9 @@ def build_section_rows(locations, pollen, uv_index, dust, config, chart_png_avai
 
     section_header = """
     <tr>
-      <td style="background:#f8fafc;padding:10px 24px;
-                 border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
+      <td style="background:#f8fafc;padding:10px 24px 10px 21px;
+                 border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;
+                 border-left:3px solid #1e293b">
         <p style="margin:0;font-size:11px;font-weight:700;color:#64748b;
                   text-transform:uppercase;letter-spacing:0.08em">Air Quality &amp; Pollen</p>
       </td>

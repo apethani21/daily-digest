@@ -113,8 +113,9 @@ def _failure_result():
     plain = "⚠ Tube strike data could not be retrieved — check tfl.gov.uk manually."
     rows_html = """
     <tr>
-      <td style="background:#f8fafc;padding:10px 24px;
-                 border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
+      <td style="background:#f8fafc;padding:10px 24px 10px 21px;
+                 border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;
+                 border-left:3px solid #dc2626">
         <p style="margin:0;font-size:11px;font-weight:700;color:#64748b;
                   text-transform:uppercase;letter-spacing:0.08em">🚇 Tube Strikes</p>
       </td>
@@ -167,8 +168,9 @@ def build_section_rows(data, lookahead_days):
     n = len(strikes)
     section_header = f"""
     <tr>
-      <td style="background:#f8fafc;padding:10px 24px;
-                 border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
+      <td style="background:#f8fafc;padding:10px 24px 10px 21px;
+                 border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;
+                 border-left:3px solid #dc2626">
         <p style="margin:0;font-size:11px;font-weight:700;color:#64748b;
                   text-transform:uppercase;letter-spacing:0.08em">
           🚇 Tube Strikes

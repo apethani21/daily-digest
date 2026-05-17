@@ -89,7 +89,7 @@ def assemble_html(active_results, now):
     sections_html = ""
     for i, r in enumerate(active_results):
         if i > 0:
-            sections_html += '\n<tr><td style="background:#f1f5f9;height:8px"></td></tr>\n'
+            sections_html += '\n<tr><td style="background:#f1f5f9;height:20px"></td></tr>\n'
         sections_html += r.rows_html
 
     return f"""<!DOCTYPE html>
