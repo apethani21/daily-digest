@@ -75,36 +75,66 @@ def _parse_page(soup, url):
 
     strikes = []
 
-    cards = soup.find_all("div", class_="strike-date-card")
-    if cards:
-        for card in cards:
-            status_el = card.find(class_="status")
-            date_el = card.find(class_="date-day")
-            if not status_el or not date_el:
+    cal_rows = soup.find_all("div", class_="ts-cal-row")
+    if cal_rows:
+        for row in cal_rows:
+            label_el = row.find(class_="ts-cal-label")
+            blurb_el = row.find(class_="ts-cal-pattern")
+            badge_el = row.find(class_="ts-badge-upcoming")
+            if not label_el or not badge_el:
                 continue
-            if "UPCOMING" not in status_el.get_text(strip=True).upper():
-                continue
-            day_label = date_el.get_text(strip=True)
+            day_label = label_el.get_text(" ", strip=True)
+            day_label = re.sub(r"\s*UPCOMING\s*", "", day_label, flags=re.IGNORECASE).strip()
             d = _parse_date_text(day_label)
             if d:
-                strikes.append({"date": d, "day_label": day_label, "type": "Strike day"})
+                blurb = blurb_el.get_text(" ", strip=True) if blurb_el else ""
+                strikes.append({"date": d, "day_label": day_label, "blurb": blurb})
     else:
-        seen = set()
-        for m in _DATE_PAT.finditer(full_text):
-            day_label = f"{m.group(1)} {m.group(2)} {m.group(3)}"
-            if m.group(4):
-                day_label += f" {m.group(4)}"
-            d = _parse_date_text(day_label)
-            if d and d not in seen:
-                seen.add(d)
-                strikes.append({"date": d, "day_label": day_label, "type": "Strike day"})
+        cards = soup.find_all("div", class_="strike-date-card")
+        if cards:
+            for card in cards:
+                status_el = card.find(class_="status")
+                date_el = card.find(class_="date-day")
+                if not status_el or not date_el:
+                    continue
+                if "UPCOMING" not in status_el.get_text(strip=True).upper():
+                    continue
+                day_label = date_el.get_text(strip=True)
+                d = _parse_date_text(day_label)
+                if d:
+                    strikes.append({"date": d, "day_label": day_label, "blurb": ""})
+        else:
+            seen = set()
+            for m in _DATE_PAT.finditer(full_text):
+                day_label = f"{m.group(1)} {m.group(2)} {m.group(3)}"
+                if m.group(4):
+                    day_label += f" {m.group(4)}"
+                d = _parse_date_text(day_label)
+                if d and d not in seen:
+                    seen.add(d)
+                    strikes.append({"date": d, "day_label": day_label, "blurb": ""})
 
     strikes.sort(key=lambda s: s["date"])
+
+    line_impact = None
+    impact_el = soup.find("div", class_="ts-lines-affected-bad")
+    if impact_el:
+        line_impact = impact_el.get_text(" ", strip=True)
+
+    running_normally = None
+    lines_box = soup.find("div", class_="ts-lines-box")
+    if lines_box:
+        box_text = lines_box.get_text(" ", strip=True)
+        m = re.search(r"Running normally[:\s]+(.+)", box_text, re.IGNORECASE)
+        if m:
+            running_normally = m.group(1).strip().rstrip(".")
 
     return {
         "upcoming_strikes": strikes,
         "last_updated": last_updated,
         "update_note": update_note,
+        "line_impact": line_impact,
+        "running_normally": running_normally,
         "source_url": url,
     }
 
@@ -137,17 +167,51 @@ def build_section_rows(data, lookahead_days):
     strikes = data["upcoming_strikes"]
     last_updated = data["last_updated"] or "unknown"
     update_note = data["update_note"]
+    line_impact = data.get("line_impact")
+    running_normally = data.get("running_normally")
     source_url = data["source_url"]
 
     date_rows = ""
     for s in strikes:
+        blurb_html = ""
+        if s.get("blurb"):
+            blurb_html = f'<div style="font-size:12px;color:#64748b;margin-top:2px">{s["blurb"]}</div>'
         date_rows += f"""
             <tr>
-              <td style="padding:8px 24px;border-bottom:1px solid #f1f5f9">
+              <td style="padding:10px 24px;border-bottom:1px solid #f1f5f9">
                 <span style="font-size:13px;font-weight:600;color:#1e293b">{s['day_label']}</span>
-                <span style="font-size:12px;color:#94a3b8;margin-left:8px">{s['type']}</span>
+                {blurb_html}
               </td>
             </tr>"""
+
+    lines_html = ""
+    if line_impact or running_normally:
+        impact_row = ""
+        if line_impact:
+            impact_row = f"""
+              <tr>
+                <td style="padding:10px 24px 6px;font-size:12px;color:#475569">
+                  <strong style="color:#dc2626">Affected:</strong> {line_impact}
+                </td>
+              </tr>"""
+        normal_row = ""
+        if running_normally:
+            normal_row = f"""
+              <tr>
+                <td style="padding:4px 24px 12px;font-size:12px;color:#475569">
+                  <strong style="color:#16a34a">Running normally:</strong> {running_normally}
+                </td>
+              </tr>"""
+        lines_html = f"""
+        <tr><td style="background:#f1f5f9;height:6px"></td></tr>
+        <tr>
+          <td style="background:white">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              {impact_row}
+              {normal_row}
+            </table>
+          </td>
+        </tr>"""
 
     note_html = ""
     if update_note:
@@ -206,6 +270,7 @@ def build_section_rows(data, lookahead_days):
         </table>
       </td>
     </tr>
+    {lines_html}
     {note_html}
     {source_html}"""
 
@@ -214,11 +279,20 @@ def build_plain_section(data, lookahead_days):
     strikes = data["upcoming_strikes"]
     last_updated = data["last_updated"] or "unknown"
     update_note = data["update_note"]
+    line_impact = data.get("line_impact")
+    running_normally = data.get("running_normally")
     source_url = data["source_url"]
 
     lines = [f"🚇 TUBE STRIKES (next {lookahead_days} days)", ""]
     for s in strikes:
-        lines.append(f"  {s['day_label']:<26}  {s['type']}")
+        lines.append(f"  {s['day_label']}")
+        if s.get("blurb"):
+            lines.append(f"    {s['blurb']}")
+    if line_impact:
+        lines.append("")
+        lines.append(f"  Affected: {line_impact}")
+    if running_normally:
+        lines.append(f"  Running normally: {running_normally}")
     if update_note:
         lines.append("")
         lines.append(f"  ⚠ {update_note}")
