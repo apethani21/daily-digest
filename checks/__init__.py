@@ -8,3 +8,4 @@ class CheckResult:
     rows_html: str
     plain: str
     chart_png: bytes | None = None
+    always_include: bool = False

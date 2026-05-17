@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from checks import air_quality, holidays, tube_strike
+from checks import air_quality, holidays, tube_strike, weather
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 LOG_FILE = SCRIPT_DIR / "logs" / "digest.log"
@@ -25,7 +25,7 @@ CONFIG_FILE = SCRIPT_DIR / "config.yaml"
 ENV_FILE = SCRIPT_DIR / ".env"
 LONDON_TZ = ZoneInfo("Europe/London")
 
-CHECKS = [air_quality, holidays, tube_strike]
+CHECKS = [weather, air_quality, holidays, tube_strike]
 
 
 def setup_logging(verbose=False):
@@ -163,7 +163,7 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Debug logging")
     parser.add_argument(
         "--check",
-        choices=["air_quality", "holidays", "tube_strike"],
+        choices=["air_quality", "holidays", "tube_strike", "weather"],
         help="Run only one check",
     )
     args = parser.parse_args()
@@ -191,7 +191,7 @@ def main():
     now = datetime.now(LONDON_TZ)
     logging.info("Starting daily digest")
 
-    check_map = {"air_quality": air_quality, "holidays": holidays, "tube_strike": tube_strike}
+    check_map = {"air_quality": air_quality, "holidays": holidays, "tube_strike": tube_strike, "weather": weather}
     to_run = [check_map[args.check]] if args.check else list(check_map.values())
 
     results = []
@@ -209,7 +209,7 @@ def main():
         logging.info("Nothing to report — no email sent")
         return
 
-    active_results = results if args.force_email else [r for r in results if r.triggered]
+    active_results = results if args.force_email else [r for r in results if r.triggered or r.always_include]
 
     subject = build_subject(active_results, now)
     plain_body = assemble_plain(active_results, now)

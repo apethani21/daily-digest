@@ -47,3 +47,10 @@ tube_strike:
   url: "https://tubenotifications.co.uk/tube-strikes"
   lookahead_days: 7
   enabled: true
+
+weather:
+  location:
+    name: "London"
+    lat: 51.5074
+    lon: -0.1278
+  forecast_days: 5
