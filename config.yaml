@@ -1,0 +1,44 @@
+air_quality:
+  thresholds:
+    aqi_max: 60       # European AQI — alert if exceeded (POOR or worse)
+    pm25_max: 20      # μg/m³
+    pollen_min: 3     # 0=none 1=very_low 2=low 3=medium 4=high 5=very_high
+    uv_index_max: 6   # High UV or above
+    dust_max: 20      # μg/m³ — Saharan dust events
+
+  locations:
+    - name: "Home"
+      lat: YOUR_HOME_LAT
+      lon: YOUR_HOME_LON
+    - name: "Work"
+      lat: YOUR_WORK_LAT
+      lon: YOUR_WORK_LON
+
+holidays:
+  lookahead_days: 7
+
+  bank_holidays:
+    url: "https://www.gov.uk/bank-holidays.json"
+    division: "england-and-wales"
+
+  exchanges:
+    - calendar: "NYSE"
+      label: "NYSE (US)"
+    - calendar: "XLON"
+      label: "LSE (UK)"
+    - calendar: "XPAR"
+      label: "Euronext Paris (France)"
+    - calendar: "XFRA"
+      label: "Frankfurt (Germany)"
+    - calendar: "XAMS"
+      label: "Euronext Amsterdam (Netherlands)"
+    - calendar: "XMIL"
+      label: "Borsa Italiana (Italy)"
+    - calendar: "XSTO"
+      label: "Nasdaq Stockholm (Sweden)"
+    - calendar: "XOSL"
+      label: "Oslo Børs (Norway)"
+    - calendar: "XCSE"
+      label: "Nasdaq Copenhagen (Denmark)"
+    - calendar: "XHEL"
+      label: "Nasdaq Helsinki (Finland)"
