@@ -42,3 +42,8 @@ holidays:
       label: "Nasdaq Copenhagen (Denmark)"
     - calendar: "XHEL"
       label: "Nasdaq Helsinki (Finland)"
+
+tube_strike:
+  url: "https://tubenotifications.co.uk/tube-strikes"
+  lookahead_days: 7
+  enabled: true

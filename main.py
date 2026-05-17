@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from checks import air_quality, holidays
+from checks import air_quality, holidays, tube_strike
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 LOG_FILE = SCRIPT_DIR / "logs" / "digest.log"
@@ -25,7 +25,7 @@ CONFIG_FILE = SCRIPT_DIR / "config.yaml"
 ENV_FILE = SCRIPT_DIR / ".env"
 LONDON_TZ = ZoneInfo("Europe/London")
 
-CHECKS = [air_quality, holidays]
+CHECKS = [air_quality, holidays, tube_strike]
 
 
 def setup_logging(verbose=False):
@@ -163,7 +163,7 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Debug logging")
     parser.add_argument(
         "--check",
-        choices=["air_quality", "holidays"],
+        choices=["air_quality", "holidays", "tube_strike"],
         help="Run only one check",
     )
     args = parser.parse_args()
@@ -191,7 +191,7 @@ def main():
     now = datetime.now(LONDON_TZ)
     logging.info("Starting daily digest")
 
-    check_map = {"air_quality": air_quality, "holidays": holidays}
+    check_map = {"air_quality": air_quality, "holidays": holidays, "tube_strike": tube_strike}
     to_run = [check_map[args.check]] if args.check else list(check_map.values())
 
     results = []
