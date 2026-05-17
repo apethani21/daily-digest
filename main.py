@@ -60,11 +60,7 @@ def load_config():
 
 
 def build_subject(active_results, now):
-    date_str = now.strftime("%-d %b %Y")
-    if not active_results:
-        return f"Daily Digest — {date_str}"
-    tags = " & ".join(r.subject_tag for r in active_results if r.subject_tag)
-    return f"Daily Digest: {tags} — {date_str}"
+    return f"Daily Digest — {now.strftime('%-d %b %Y')}"
 
 
 def assemble_plain(active_results, now):
@@ -192,7 +188,7 @@ def main():
     logging.info("Starting daily digest")
 
     check_map = {"air_quality": air_quality, "holidays": holidays, "tube_strike": tube_strike, "weather": weather}
-    to_run = [check_map[args.check]] if args.check else list(check_map.values())
+    to_run = [check_map[args.check]] if args.check else CHECKS
 
     results = []
     for module in to_run:
