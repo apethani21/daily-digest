@@ -1,3 +1,5 @@
+import logging
+import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -69,21 +71,26 @@ def _wmo(code):
     return WMO_EMOJI.get(code, "🌡"), WMO_LABEL.get(code, "Unknown")
 
 
-def fetch_forecast(lat, lon, days):
-    r = requests.get(
-        "https://api.open-meteo.com/v1/forecast",
-        params={
-            "latitude": lat,
-            "longitude": lon,
-            "daily": "weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max",
-            "hourly": "weathercode,temperature_2m,precipitation_probability,windspeed_10m",
-            "timezone": "Europe/London",
-            "forecast_days": days,
-        },
-        timeout=10,
-    )
-    r.raise_for_status()
-    return r.json()
+def fetch_forecast(lat, lon, days, retries=2):
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "daily": "weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max",
+        "hourly": "weathercode,temperature_2m,precipitation_probability,windspeed_10m",
+        "timezone": "Europe/London",
+        "forecast_days": days,
+    }
+    for attempt in range(retries + 1):
+        try:
+            r = requests.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=20)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            if attempt < retries:
+                logging.warning(f"Weather fetch failed (attempt {attempt + 1}), retrying: {e}")
+                time.sleep(3)
+            else:
+                raise
 
 
 def extract_intraday(data):
