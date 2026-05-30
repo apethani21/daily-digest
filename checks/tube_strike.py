@@ -163,7 +163,7 @@ def _failure_result():
     )
 
 
-def build_section_rows(data, lookahead_days):
+def build_section_rows(data):
     strikes = data["upcoming_strikes"]
     last_updated = data["last_updated"] or "unknown"
     update_note = data["update_note"]
@@ -240,7 +240,7 @@ def build_section_rows(data, lookahead_days):
           🚇 Tube Strikes
           <span style="font-weight:400;text-transform:none;letter-spacing:0;
                        margin-left:8px;font-size:11px;color:#94a3b8">
-            next {lookahead_days} day{'s' if lookahead_days != 1 else ''} &nbsp;&middot;&nbsp; {n} date{'s' if n != 1 else ''}
+            {n} date{'s' if n != 1 else ''} upcoming
           </span>
         </p>
       </td>
@@ -275,7 +275,7 @@ def build_section_rows(data, lookahead_days):
     {source_html}"""
 
 
-def build_plain_section(data, lookahead_days):
+def build_plain_section(data):
     strikes = data["upcoming_strikes"]
     last_updated = data["last_updated"] or "unknown"
     update_note = data["update_note"]
@@ -283,7 +283,8 @@ def build_plain_section(data, lookahead_days):
     running_normally = data.get("running_normally")
     source_url = data["source_url"]
 
-    lines = [f"🚇 TUBE STRIKES (next {lookahead_days} days)", ""]
+    n = len(strikes)
+    lines = [f"🚇 TUBE STRIKES ({n} date{'s' if n != 1 else ''} upcoming)", ""]
     for s in strikes:
         lines.append(f"  {s['day_label']}")
         if s.get("blurb"):
@@ -329,22 +330,23 @@ def run(config) -> CheckResult:
 
     today = datetime.now(LONDON_TZ).date()
     window_end = today + timedelta(days=lookahead_days)
-    data["upcoming_strikes"] = [
-        s for s in data["upcoming_strikes"] if today <= s["date"] <= window_end
-    ]
 
-    n = len(data["upcoming_strikes"])
-    if n == 0:
+    all_upcoming = [s for s in data["upcoming_strikes"] if s["date"] >= today]
+    in_window = [s for s in all_upcoming if s["date"] <= window_end]
+    data["upcoming_strikes"] = all_upcoming
+
+    if not in_window:
         logging.info("Tube strike check: no upcoming strikes in window — section omitted")
         return CheckResult(triggered=False, subject_tag="🚇 Tube Strikes", rows_html="", plain="")
 
+    n = len(all_upcoming)
     logging.info(
-        f"Tube strike check: found {n} upcoming strike date{'s' if n != 1 else ''} in next {lookahead_days} days"
+        f"Tube strike check: found {n} upcoming strike date{'s' if n != 1 else ''} ({len(in_window)} within lookahead window)"
     )
 
     return CheckResult(
         triggered=True,
         subject_tag="🚇 Tube Strikes",
-        rows_html=build_section_rows(data, lookahead_days),
-        plain=build_plain_section(data, lookahead_days),
+        rows_html=build_section_rows(data),
+        plain=build_plain_section(data),
     )
